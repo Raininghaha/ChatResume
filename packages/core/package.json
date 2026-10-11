@@ -1,0 +1,31 @@
+{
+  "name": "@resume-chat/core",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "对话式简历编辑器的内核：简历数据、对话编排、渲染与导出。不含 HTTP，不含界面。",
+  "license": "MIT",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "bin": {
+    "resume": "./bin/resume.js"
+  },
+  "files": [
+    "index.js",
+    "cli.js",
+    "bin/",
+    "lib/",
+    "templates/"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "resume",
+    "cv",
+    "agent",
+    "claude",
+    "cli"
+  ]
+}

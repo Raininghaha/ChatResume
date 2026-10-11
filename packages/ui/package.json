@@ -1,0 +1,38 @@
+{
+  "name": "resume-chat",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "对话式简历编辑器：左对话、右 A4 预览，由本机 claude CLI 驱动（面向 agent 的开源项目）",
+  "license": "MIT",
+  "bin": {
+    "resume-chat": "./bin/resume-chat.js"
+  },
+  "main": "./server.js",
+  "exports": {
+    ".": "./server.js",
+    "./cli": "./cli.js"
+  },
+  "files": [
+    "bin/",
+    "cli.js",
+    "public/",
+    "server.js"
+  ],
+  "dependencies": {
+    "@resume-chat/core": "^0.1.0"
+  },
+  "scripts": {
+    "start": "node ./server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "resume",
+    "cv",
+    "agent",
+    "claude",
+    "claude-code",
+    "a4"
+  ]
+}

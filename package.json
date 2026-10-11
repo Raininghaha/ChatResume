@@ -1,0 +1,20 @@
+{
+  "name": "resume-chat-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "对话式简历编辑器 —— 用说话的方式改简历，面向 agent 的开源项目",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "start": "node packages/ui/server.js",
+    "resume": "node packages/ui/bin/resume-chat.js",
+    "smoke": "node scripts/smoke.js",
+    "syntax": "node scripts/syntax.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

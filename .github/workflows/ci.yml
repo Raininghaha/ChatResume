@@ -1,0 +1,33 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: node ${{ matrix.node }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        # 18 覆盖「能聊但量不了页」的降级路径，22 覆盖完整路径
+        node: [18, 22]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      # 零外部依赖，这一步只是把两个 workspace 软链起来，不联网
+      - name: 准备 workspace
+        run: npm install --no-audit --no-fund --prefer-offline
+
+      - name: 语法与控制字符检查
+        run: npm run syntax
+
+      - name: 冒烟测试
+        run: npm run smoke

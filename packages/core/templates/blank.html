@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>新简历</title>
+    <style>
+      /* ============================ 版式基础 ============================ */
+      @page {
+        size: A4;
+        margin: 0;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background: #b9b9b9;
+        font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, sans-serif;
+        font-size: 12.2px;
+        line-height: 1.62;
+        color: #1c1c1c;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      .page {
+        width: 210mm;
+        min-height: 297mm;
+        padding: 11mm 14mm 10mm;
+        background: #fff;
+        position: relative;
+      }
+
+      @media screen {
+        .page + .page {
+          margin-top: 22px;
+        }
+      }
+
+      @media print {
+        body {
+          background: #fff;
+        }
+        .page {
+          /* 打印时交给内容决定高度：min-height 恰好等于纸张会因亚像素误差多出一页 */
+          min-height: 0;
+          box-shadow: none;
+          break-after: page;
+        }
+        .page:last-child {
+          break-after: auto;
+        }
+      }
+
+      /* ============================== 抬头 ============================== */
+      .hero {
+        position: relative;
+        padding: 0 0 3mm;
+        text-align: center;
+      }
+
+      .hero h1 {
+        margin: 0 0 8px;
+        font-size: 27px;
+        font-weight: 600;
+        letter-spacing: 0.34em;
+        text-indent: 0.34em;
+        color: #141414;
+      }
+
+      .contact {
+        font-size: 11.6px;
+        color: #333;
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+      }
+
+      .contact .k {
+        color: #8a8a8a;
+        margin-right: 3px;
+      }
+
+      .hero-rule {
+        height: 1.4px;
+        background: #1c1c1c;
+        margin-top: 2mm;
+      }
+
+      /* ============================== 分节 ============================== */
+      .sec {
+        margin-top: 12px;
+      }
+
+      .sec > h2 {
+        margin: 0 0 7px;
+        padding-bottom: 4px;
+        font-size: 13.4px;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: #141414;
+        border-bottom: 1px solid #dcdcdc;
+        display: flex;
+        align-items: center;
+      }
+
+      .sec > h2::before {
+        content: "";
+        width: 3px;
+        height: 13px;
+        background: #2b2b2b;
+        margin-right: 7px;
+        flex: 0 0 auto;
+      }
+
+      /* ============================ 条目行 ============================ */
+      .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+      }
+
+      .row .date {
+        flex: 0 0 auto;
+        font-size: 11.6px;
+        color: #3a3a3a;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .edu .row {
+        margin-bottom: 1px;
+      }
+
+      .edu .name {
+        font-size: 12.4px;
+        color: #1c1c1c;
+      }
+
+      /* ============================== 工作 ============================== */
+      .job + .job {
+        margin-top: 11px;
+      }
+
+      .job .company {
+        font-size: 12.6px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      .job .summary {
+        margin: 2px 0 6px;
+        color: #4a4a4a;
+        font-size: 11.9px;
+        text-align: justify;
+      }
+
+      .sub {
+        position: relative;
+        padding-left: 13px;
+        margin: 6px 0 3px;
+        font-size: 12.2px;
+        font-weight: 700;
+        color: #141414;
+      }
+
+      .sub::before {
+        content: "";
+        position: absolute;
+        left: 1px;
+        top: 5px;
+        width: 5px;
+        height: 5px;
+        background: #2b2b2b;
+      }
+
+      .bullets {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .bullets li {
+        position: relative;
+        padding-left: 13px;
+        margin-bottom: 1px;
+        color: #333;
+        text-align: justify;
+      }
+
+      .bullets li::before {
+        content: "•";
+        position: absolute;
+        left: 3px;
+        color: #6b6b6b;
+        font-size: 11px;
+      }
+
+      .bullets li b {
+        color: #141414;
+        font-weight: 600;
+      }
+
+      /* ============================ 占位提示 ============================ */
+      .placeholder {
+        color: #b0b0b0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="hero">
+        <h1>你的姓名</h1>
+        <div class="contact">
+          <span><span class="k">电话</span>13800000000</span>
+          <span><span class="k">邮箱</span>you@example.com</span>
+        </div>
+      </header>
+      <div class="hero-rule"></div>
+
+      <section class="sec edu">
+        <h2>教育经历</h2>
+        <div class="row">
+          <span class="name">学校 · 专业 · 学历</span>
+          <span class="date">2020 – 2024</span>
+        </div>
+      </section>
+
+      <section class="sec">
+        <h2>工作经历</h2>
+        <div class="job">
+          <div class="row">
+            <span class="company">公司 — 职位</span>
+            <span class="date">2024/01 – 至今</span>
+          </div>
+          <p class="summary placeholder">
+            用一两句话概括这段经历负责的方向和范围。
+          </p>
+          <div class="sub">核心项目</div>
+          <ul class="bullets">
+            <li>做了什么，怎么做的，结果如何（尽量带数字）。</li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="sec">
+        <h2>个人优势</h2>
+        <ul class="bullets">
+          <li><b>一句话概括你的核心竞争力：</b>支撑这个结论的经历或证据。</li>
+        </ul>
+      </section>
+    </div>
+  </body>
+</html>

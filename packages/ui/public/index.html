@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>简历助手</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">简</div>
+        <div class="switcher">
+          <button class="switcher-btn" id="switcherBtn" aria-haspopup="menu" aria-expanded="false">
+            <span id="activeName">加载中…</span>
+            <svg class="chev" viewBox="0 0 12 12" width="11" height="11" aria-hidden="true">
+              <path d="M3 4.5 6 7.5 9 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </button>
+          <div class="menu" id="switcherMenu" hidden role="menu">
+            <div class="menu-head">简历</div>
+            <div class="menu-list" id="menuList"></div>
+            <div class="menu-sep"></div>
+            <button class="menu-item" data-act="create">
+              <span class="mi-ico">＋</span>新建空白简历…
+            </button>
+            <button class="menu-item" data-act="duplicate">
+              <span class="mi-ico">⧉</span>复制当前简历
+            </button>
+            <button class="menu-item" data-act="rename">
+              <span class="mi-ico">✎</span>重命名当前…
+            </button>
+            <button class="menu-item danger" data-act="delete">
+              <span class="mi-ico">✕</span>删除当前简历
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="topbar-actions">
+        <div class="status" id="status"><i class="dot"></i><span id="statusText">就绪</span></div>
+        <button class="btn btn-ghost" id="resetBtn" title="清空对话记录，重新开始">重置对话</button>
+        <button class="btn btn-primary" id="exportBtn">下载 PDF</button>
+        <form action="/logout" method="post" id="logoutForm" hidden><button class="btn btn-ghost" title="退出登录">退出</button></form>
+      </div>
+    </header>
+
+    <nav class="mobile-tabs" aria-label="工作区"><button id="showChat" class="active" aria-pressed="true">对话</button><button id="showPreview" aria-pressed="false">简历预览</button></nav>
+    <main class="layout" data-view="chat">
+      <section class="chat">
+        <div class="chat-head">
+          <span class="label">对话</span>
+          <span class="hint" id="chatHint">Enter 发送 · Shift+Enter 换行</span>
+        </div>
+
+        <div class="messages" id="messages">
+          <div class="empty" id="empty">
+            <div class="empty-icon">✦</div>
+            <h2>用说话的方式改简历</h2>
+            <p>告诉我想怎么改，我直接动右边的稿子，改完立刻刷新预览。想自己动手就点右边的「编辑」。</p>
+            <div class="chips">
+              <button class="chip" data-prompt="把百度这段的工作描述再精简一些，保留关键数据">把百度那段精简一些</button>
+              <button class="chip" data-prompt="突出我在 AI 模型评估和数据管线上的经验">突出模型评估经验</button>
+              <button class="chip" data-prompt="帮我把整体措辞调得更贴近 AI 产品经理岗位的要求">贴合 AI 产品岗调整措辞</button>
+              <button class="chip" data-prompt="个人优势这一块太长了，压缩到三条以内">压缩个人优势</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="composer">
+          <div class="composer-box">
+            <textarea id="input" rows="1" placeholder="说说你想怎么改这份简历…"></textarea>
+            <button class="send" id="sendBtn" aria-label="发送">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path d="M4 12h13M11 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </button>
+          </div>
+          <div class="composer-foot">
+            <span>对话由本机 claude CLI 驱动</span>
+            <span id="turnHint"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="preview">
+        <div class="preview-head">
+          <span class="label">预览</span>
+          <div class="preview-tools">
+            <span class="edit-hint" id="editHint" hidden>
+              <span class="pulse"></span>
+              <span>编辑中 · 点简历上的字直接改</span>
+              <span class="saved" id="savedTag"></span>
+            </span>
+            <span class="pagecount" id="pageCount">—</span>
+            <div class="zoom">
+              <button class="zbtn" id="zoomOut" aria-label="缩小">−</button>
+              <button class="zbtn zlabel" id="zoomFit">适配</button>
+              <button class="zbtn" id="zoomIn" aria-label="放大">+</button>
+              <span class="zval" id="zoomVal">100%</span>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="editBtn">编辑</button>
+            <button class="btn btn-ghost btn-sm" id="reloadBtn">刷新</button>
+          </div>
+        </div>
+        <div class="canvas" id="canvas">
+          <div class="stage" id="stage">
+            <iframe id="frame" src="/resume" title="简历预览"></iframe>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="toast" id="toast"></div>
+    <script src="/app.js"></script>
+  </body>
+</html>

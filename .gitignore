@@ -1,0 +1,27 @@
+# 依赖（本项目零外部依赖，这里只是 workspace 的软链）
+node_modules/
+
+# 简历数据默认写在 ~/.resume-chat，永远不会进仓库。
+# 万一有人用 RESUME_HOME 指回仓库内，下面几条兜住。
+workspace/
+.resume-chat/
+.state.json
+state.json
+*.log
+resume-chat.log
+# RESUME_HOME 指到仓库根时的两个数据目录。只锚根目录：assets/ 是很常见的
+# 源码目录名，不能全仓库一刀切忽略掉。
+/resumes/
+/assets/
+
+# 导出产物与个人文件
+exports/
+*.pdf
+简历/
+
+# 系统杂物
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
