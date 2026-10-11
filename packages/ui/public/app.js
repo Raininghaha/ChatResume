@@ -832,15 +832,21 @@ loadResumes().then(() => {
 autoGrow();
 inputEl.focus();
 
+function updateAgentHint() {
+  $('agentConnectionHint').hidden = runnerSelect.value !== 'external';
+}
+runnerSelect.addEventListener('change', updateAgentHint);
 async function loadRunners() {
   try {
     const data = await (await fetch('/api/status')).json();
     for (const r of data.runners || []) {
       const option = document.createElement('option');
-      option.value = r.name; option.textContent = r.name + (r.available.ok ? '' : '（未安装）');
+      option.value = r.name; option.textContent = (r.name === 'external' ? '自己的 Agent（外部连接）' : r.name) + (r.available.ok ? '' : '（未安装）');
+      option.title = r.description || r.name;
       option.disabled = !r.available.ok; runnerSelect.appendChild(option);
     }
     if ([...runnerSelect.options].some(o => o.value === data.defaultRunner)) runnerSelect.value = data.defaultRunner;
+    updateAgentHint();
   } catch { /* Sending a message reports backend errors. */ }
 }
 loadRunners();

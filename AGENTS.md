@@ -1,71 +1,41 @@
-# AGENTS.md
+# Agent 使用说明
 
-给 agent 的说明。人看 `README.md`。
+ChatResume 是用对话驱动修改简历的 GUI。使用你自己的 Agent，不要求安装另一家 Agent 或固定模型版本。
 
-## 这是什么
-
-用自然语言改简历的工具。简历是普通 HTML 文件，存在 `~/.resume-chat/resumes/<名字>.html`。
-
-## 你要做的三步
+## 启动与连接
 
 ```bash
-npm install                    # 零外部依赖，离线可跑
-resume-chat status --json      # 确认可用 Agent 与浏览器就绪
-resume-chat ask "<用户的要求>"  # 对话改简历
+npm install
+npm start
 ```
 
-`ask` 正文走 stdout，进度走 stderr；`--json` 下是 NDJSON 事件流
-（`{t: 'status'|'tool'|'text'|'session'|'error'|'done', v}`）。
+读取 [接入协议](docs/agents.md)。可以使用本地命令、HTTP 服务，或主动领取 GUI 消息：
 
-## 改完必须检查
+- POST `/api/agent/next` 领取用户要求与简历 HTML。
+- POST `/api/agent/events` 回传回复、`resume` 修改事件和 `done`。
+- 网页选择「自己的 Agent」，即可在现有 Agent 会话中提供对话与可视化修改。
 
-```bash
-resume-chat check --json
-```
+Claude / Codex 是可选适配器，不能作为通用连接的前提。不要假设任意桌面 Agent 都有相同 CLI 或可以自动被控制。
 
-简历最常见的暗病是**内容多两行、悄悄溢到第二页**，肉眼看不出来。
-`check` 返回 `{ fits, pages, overflowPx }`；`fits: false` 时退出码是 **1**，
-应当把内容压回一页再交付。
+## 文件与编辑规则
 
-## 也可以直接改文件
-
-不想走对话就自己编辑 `~/.resume-chat/resumes/<名字>.html`。规则：
-
-- 单文件 HTML，样式内联 `<style>`，A4 版式（`.page` 是 210mm × 297mm）
-- 图片引用写成 `../assets/文件名`
-- 打印样式里 `.page` 的 `min-height` 必须是 `0`，否则亚像素误差会把每页撑成两页
-- 改完跑 `resume-chat check`
-
-## 别做的事
-
-- 不要编造经历、数字、学历、奖项。信息不够就问用户。
-- 不要动 `resumes/` 下其他的简历。
-- 不要改简历的整体视觉风格，除非用户明确要求。
-- 不要把简历数据写进这个仓库：数据目录是 `~/.resume-chat`，仓库的 `.gitignore` 也挡住了常见落点。
-
-## 退出码
-
-`0` 成功 · `1` check 未通过 · `2` 用法错误 · `3` 环境不满足（缺所选 Agent / 缺浏览器）
-
-## 结构
-
-- `packages/core` —— 内核：简历数据、对话编排、渲染导出。零 HTTP，零界面。
-- `packages/ui` —— 界面：HTTP + SSE + A4 预览。依赖 core。
-
-改对话行为看 `packages/core/lib/chat.js` 和 `lib/prompt.js`；
-改对话后端看 `packages/core/lib/runners/`。
-
-## 支持任意 Agent
-
-任何能读写文件或运行命令的 Agent（Codex、Claude Code、Cursor、Gemini 等）都可以使用前述 CLI 和直接编辑流程，不需要先安装 Claude。
-在仓库内调用 `npm run resume -- <命令>`，无需全局安装。例如：
+默认数据在 `~/.resume-chat/`，可用 `RESUME_HOME` 改路径。
 
 ```bash
 npm run resume -- path --json
 npm run resume -- check --json
-npm run resume -- ask --runner codex "精简最近一段工作经历"
+npm run resume -- export -o /tmp/resume.pdf
 ```
 
-网页左下方可以选择对话 Agent。内置 Claude、Codex；默认 `auto` 选择本机可用的 Agent，`RESUME_RUNNER` 可指定默认值。
-会话按简历和 Agent 隔离，切换 Agent 不会复用另一家 CLI 的 session。
-其它对话后端配置在数据目录的 `runners.json`，详见 `docs/agents.md`。
+- 简历是 `resumes/<名字>.html`，完整 HTML、内联样式、A4 版式。
+- 图片使用 `../assets/文件名`；打印样式 `.page` 的 `min-height` 为 0。
+- 每轮先读当前内容；协议修改带上 revision，避免覆盖其他编辑。
+- 只修改本轮指定简历；不编造经历、数据或学历。信息不足时在对话中询问。
+- 保留版式，除非用户要求调整；完成后检查目标页数和溢出量。
+- 用户的简历、图片、会话、连接凭证和日志不得放入仓库。
+
+退出码：0 成功，1 操作/对话/分页失败，2 用法错误，3 环境缺失。
+
+## 代码结构
+
+`packages/core` 负责通用对话编排、连接协议、简历管理与渲染；`packages/ui` 提供 HTTP 和 GUI。修改接入协议时保留版本兼容；具体厂商适配器放在 `packages/core/lib/runners/`。

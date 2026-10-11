@@ -54,3 +54,5 @@ export {
 export { getRunner, listRunners } from './lib/runners/index.js';
 
 export { runCli } from './cli.js';
+
+export { claimJob, submitEvents, openMailbox } from './lib/runners/external.js';

@@ -1,8 +1,10 @@
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
+import { PROTOCOL, event } from './runners/protocol.js';
 import { ResumeError } from './errors.js';
 import { buildSystemPrompt } from './prompt.js';
 import { getRunner } from './runners/index.js';
-import { activeName, readResume } from './resumes.js';
+import { activeName, readResume, writeResume } from './resumes.js';
 import { ensureHome, loadState, paths, saveState } from './workspace.js';
 
 /**
@@ -92,18 +94,24 @@ export async function* ask({
   let nextSession;
 
   try {
-    const stream = runner.run({
-      systemPrompt: buildSystemPrompt({
-        active: target,
-        extra: readPromptExtra(promptFile) || promptExtra || '',
-      }),
-      prompt: text,
-      sessionId,
-      cwd: cwd || paths().home,
-      signal: controller.signal,
-    });
+    const systemPrompt = buildSystemPrompt({ active: target,
+      extra: readPromptExtra(promptFile) || promptExtra || '' });
+    const html = readResume(target);
+    const revision = value => createHash('sha256').update(value).digest('hex');
+    const request = { protocol: PROTOCOL, systemPrompt, prompt: text, sessionId,
+      cwd: cwd || paths().home, resume: { name: target, html, revision: revision(html) } };
+    const stream = runner.run({ systemPrompt, prompt: text, sessionId,
+      cwd: request.cwd, request, signal: controller.signal });
 
-    for await (const ev of stream) {
+    for await (const value of stream) {
+      const ev = event(value);
+      if (ev.t === 'resume') {
+        if (revision(readResume(target)) !== ev.revision)
+          throw new ResumeError('简历已更新，Agent 修改未覆盖新内容，请重试', 'CONFLICT', 409, 1);
+        writeResume(target, ev.html);
+        yield { t: 'tool', v: '简历已更新' };
+        continue;
+      }
       if (ev.t === 'session') {
         nextSession = ev.v;
         continue;

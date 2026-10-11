@@ -8,6 +8,9 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import {
   ResumeError,
+  claimJob,
+  openMailbox,
+  submitEvents,
   activeName,
   applyAction,
   ask,
@@ -129,6 +132,7 @@ export function createServer({ log = createLogger() } = {}) {
   const home = paths().home;
   const gate = accessGate(process.env.RESUME_ACCESS_CONFIG || path.join(home, 'remote-access.json'));
   let exporting = false;
+  const stopMailbox = openMailbox();
 
   // ------------------------------------------------------------- SSE 广播
   const clients = new Set();
@@ -274,6 +278,22 @@ export function createServer({ log = createLogger() } = {}) {
     const url = new URL(req.url, `http://localhost:${DEFAULT_PORT}`);
     const p = url.pathname;
     if (!await gate(req, res, url)) return;
+    // Same access gate as the GUI: remote workers must authenticate first.
+    if (req.method === 'GET' && p === '/api/agent/protocol') {
+      sendJson(res, 200, { protocol: 'chatresume/1', transports: ['command', 'http', 'external'],
+        events: ['status', 'tool', 'text', 'resume', 'session', 'error', 'done'] });
+      return;
+    }
+    if (req.method === 'POST' && p === '/api/agent/next') {
+      sendJson(res, 200, { job: claimJob() });
+      return;
+    }
+    if (req.method === 'POST' && p === '/api/agent/events') {
+      const body = await readJson(req, 9e6);
+      submitEvents(body?.id, body?.token, body?.events);
+      sendJson(res, 200, { ok: true });
+      return;
+    }
     if (req.method === 'GET' && p === '/api/access') {
       const configFile = process.env.RESUME_ACCESS_CONFIG || path.join(home, 'remote-access.json');
       const config = fs.existsSync(configFile) ? JSON.parse(fs.readFileSync(configFile,'utf8')) : null;
@@ -375,7 +395,7 @@ export function createServer({ log = createLogger() } = {}) {
         browser: browserStatus(),
         render: renderStatus(),
         runners: listRunners(),
-        defaultRunner: process.env.RESUME_RUNNER || 'auto',
+        defaultRunner: process.env.RESUME_RUNNER || 'external',
       });
       return;
     }
@@ -422,7 +442,7 @@ export function createServer({ log = createLogger() } = {}) {
       else res.end();
     }
   });
-  server.on('close', stopWatch);
+  server.on('close', () => { stopWatch(); stopMailbox(); });
 
   // 长连接的生成超时由 Agent runner 管理；HTTP 层允许持续传输事件。
   server.requestTimeout = 0;

@@ -633,3 +633,6 @@ body {
 }
 
 #runnerSelect { font: inherit; color: inherit; border: 1px solid var(--line-soft); background: transparent; border-radius: 5px; padding: 3px 5px; max-width: 160px; }
+
+.agent-connection-hint { margin: 8px 0; font-size: 12px; line-height: 1.5; color: #777; }
+.agent-connection-hint[hidden] { display: none; }

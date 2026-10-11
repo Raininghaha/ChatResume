@@ -22,7 +22,7 @@
 ## 环境要求
 
 - 建议使用 **Node.js 22+**。Node 18/20 可运行基础功能，但页数测量与命令行 PDF 导出需要 Node 22+ 的内置 WebSocket。
-- 对话功能需要本机安装并登录 **Claude Code CLI 或 Codex CLI**，也可配置其它 Agent。任意能读写文件或运行命令的外部 Agent 可直接使用本项目 CLI，无需 Claude。
+- 对话由用户自己的 Agent 提供，支持命令、HTTP 或外部主动连接。Claude / Codex 是可选适配器，详情见 [接入说明](agents.md)。
 - 页数测量与命令行导出需要本机 Chrome / Chromium 等受支持浏览器。
 - 仅在 macOS 上充分验证；Linux / Windows 的浏览器路径表已提供，但未充分实测。
 
@@ -37,8 +37,6 @@
 ```bash
 npm install
 node --version
-claude --version
-claude auth status
 npx resume-chat status --json
 npm start
 ```
@@ -80,7 +78,7 @@ node packages/ui/server.js --no-open
   → 对话结束后使用无头浏览器检查页数
 ```
 
-Agent CLI 按请求启动，不需要提前打开 CLI 窗口。网页左下方选择 Agent；默认自动选择本机可用后端。
+Agent CLI 按请求启动，不需要提前打开 CLI 窗口。网页左下方选择 Agent；默认等待用户自己的外部 Agent，连接方式见 [接入说明](agents.md)。
 
 - **HTTP + NDJSON**：传输每轮对话的生成事件。
 - **SSE**：广播文件变化和页数检查结果。
@@ -131,7 +129,7 @@ npx resume-chat export "我的简历" -o /tmp/resume.pdf
 其它       serve [--port 8790] [--no-open]   runners   status   version   help
 ```
 
-全局选项：`--json`、`--home <目录>`、`--runner <名字>`、`--prompt-file <文件>`、`-q`。内置 `claude` 和 `codex` runner，默认 `auto`；其它 Agent 可用本地配置接入，见 [Agent 接入说明](agents.md)。完整参数以 `npx resume-chat help` 为准。
+全局选项：`--json`、`--home <目录>`、`--runner <名字>`、`--prompt-file <文件>`、`-q`。内置 `claude` 和 `codex` runner，默认 `auto`，没有配置本地连接时 GUI 等待外部 Agent；其它 Agent 可用本地配置接入，见 [Agent 接入说明](agents.md)。完整参数以 `npx resume-chat help` 为准。
 
 `ask` 的回复正文走 stdout，进度和错误走 stderr。`--json` 输出 NDJSON 事件流，事件字段为 `{t, v, name}`，公开对话事件包括 `status`、`tool`、`text`、`error`、`done`；会话事件由内核处理并写入状态文件。
 
