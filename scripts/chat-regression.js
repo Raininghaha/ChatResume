@@ -88,7 +88,7 @@ try {
     const messages = [];
     const errors = [];
     const context = vm.createContext({
-      inputEl:{value:'测试'},busy:false,editMode:false,activeResume:name,
+      inputEl:{value:'测试'},busy:false,editMode:false,activeResume:name,runnerSelect:{value:'claude'},
       autoGrow(){},addUserMessage(){},setBusy(){},setStatus(){},reloadPreview(){},
       addErrorMessage(value){errors.push(value);},
       addAssistantMessage(){return {setCaret(){},doneTools(){},append(value){messages.push(value);}};},

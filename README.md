@@ -8,7 +8,7 @@
 
 | 功能 | 当前实现 |
 | --- | --- |
-| 对话修改 | 本机 Claude CLI 读取当前简历，通过 Read / Edit / Write 等工具修改文件，并流式返回回复 |
+| 对话修改 | 本机所选 Agent CLI（Claude / Codex / 自定义）读取当前简历，通过 Read / Edit / Write 等工具修改文件，并流式返回回复 |
 | 可视化预览 | 右侧 iframe 展示 A4 简历，支持缩放与适配；文件变化后自动刷新 |
 | 手动编辑 | 点击「编辑」后直接修改简历文字，自动保存；点击「完成」结束编辑 |
 | 多份简历 | 新建、切换、复制、重命名、删除；禁止删除最后一份 |
@@ -22,7 +22,7 @@
 ## 环境要求
 
 - 建议使用 **Node.js 22+**。Node 18/20 可运行基础功能，但页数测量与命令行 PDF 导出需要 Node 22+ 的内置 WebSocket。
-- 对话功能需要本机安装并配置好 **Claude Code CLI**，确保 `claude` 可以执行且能够实际生成回复。
+- 对话功能需要本机安装并登录 **Claude Code CLI 或 Codex CLI**，也可配置其它 Agent。任意能读写文件或运行命令的外部 Agent 可直接使用本项目 CLI，无需 Claude。
 - 页数测量与命令行导出需要本机 Chrome / Chromium 等受支持浏览器。
 - 仅在 macOS 上充分验证；Linux / Windows 的浏览器路径表已提供，但未充分实测。
 
@@ -73,14 +73,14 @@ node packages/ui/server.js --no-open
 网页输入修改要求
   → POST /api/chat
   → core.ask：校验简历、按简历加锁、读取会话 ID
-  → runner：启动本机 claude CLI 子进程
+  → runner：启动所选 Agent CLI 子进程
   → CLI 读取并编辑当前 HTML 简历
   → NDJSON 流返回状态、工具进度、回复或错误
   → 文件监听通过 SSE 通知预览刷新
   → 对话结束后使用无头浏览器检查页数
 ```
 
-Claude CLI 按请求启动，不需要提前打开一个 CLI 窗口或启动常驻 Claude 服务。
+Agent CLI 按请求启动，不需要提前打开 CLI 窗口。网页左下方选择 Agent；默认自动选择本机可用后端。
 
 - **HTTP + NDJSON**：传输每轮对话的生成事件。
 - **SSE**：广播文件变化和页数检查结果。
@@ -91,7 +91,7 @@ Claude runner 开放 Read、Write、Edit、Glob、Grep，禁用 Bash、WebFetch�
 
 ## 会话恢复与错误处理
 
-每份简历的会话 ID 存在 `state.json` 的 `sessions` 映射中。旧 ID 对应的 CLI 会话如果已被清理，续接可能返回 `No conversation found with session ID`。
+每份简历的 Claude 会话 ID 存在 `state.json` 的 `sessions` 映射中；Codex 和自定义 Agent 的会话存在 `runnerSessions`，按简历及 Agent 隔离。旧 ID 对应的 CLI 会话如果已被清理，续接可能返回 `No conversation found with session ID`。
 
 当前处理机制：
 
@@ -131,7 +131,7 @@ npx resume-chat export "我的简历" -o /tmp/resume.pdf
 其它       serve [--port 8790] [--no-open]   runners   status   version   help
 ```
 
-全局选项：`--json`、`--home <目录>`、`--runner <名字>`、`--prompt-file <文件>`、`-q`。当前只有 `claude` runner。完整参数以 `npx resume-chat help` 为准。
+全局选项：`--json`、`--home <目录>`、`--runner <名字>`、`--prompt-file <文件>`、`-q`。内置 `claude` 和 `codex` runner，默认 `auto`；其它 Agent 可用本地配置接入，见 [Agent 接入说明](docs/agents.md)。完整参数以 `npx resume-chat help` 为准。
 
 `ask` 的回复正文走 stdout，进度和错误走 stderr。`--json` 输出 NDJSON 事件流，事件字段为 `{t, v, name}`，公开对话事件包括 `status`、`tool`、`text`、`error`、`done`；会话事件由内核处理并写入状态文件。
 
@@ -164,6 +164,9 @@ npx resume-chat export "我的简历" -o /tmp/resume.pdf
 | `RESUME_HOME` | 数据目录，默认 `~/.resume-chat` |
 | `PORT` | 网页端口，默认 8790，被占用会尝试后续端口 |
 | `CLAUDE_BIN` | Claude CLI 可执行文件的完整路径 |
+| `CODEX_BIN` | Codex CLI 可执行文件的完整路径 |
+| `RESUME_RUNNER` | 默认对话 Agent，默认 auto |
+| `RESUME_RUNNERS_FILE` | 自定义 Agent 配置路径，默认数据目录的 runners.json |
 | `RESUME_BROWSER` | 页数测量和命令行 PDF 导出使用的浏览器路径 |
 | `RESUME_PROMPT_FILE` | 追加到 system prompt 的自定义编辑规范文件 |
 
@@ -244,7 +247,9 @@ packages/core/                 内核，不含 HTTP 或界面
   lib/resumes.js               简历文件的增删改查
   lib/prompt.js                AI 编辑规范
   lib/chat.js                  按简历加锁、会话管理、对话编排
-  lib/runners/claude.js         CLI 子进程、事件解析、失效会话恢复
+  lib/runners/claude.js         Claude 子进程、事件解析、失效会话恢复
+  lib/runners/codex.js          Codex exec / resume 事件适配
+  lib/runners/custom.js         本地自定义 Agent 配置与协议
   lib/browser.js               浏览器发现和常驻无头实例
   lib/render.js                页数测量、PDF 导出
   cli.js                       命令行命令
@@ -278,3 +283,9 @@ node scripts/remote-regression.js --with-pdf
 ## License
 
 MIT
+
+## Agent 兼容性
+
+任何能操作本地文件或命令行的 Agent 都可以通过 `AGENTS.md` 使用 ChatResume。
+网页和 `ask` 内置 Claude、Codex，支持通过本地命令适配其它 Agent；无需修改源码。
+具体命令、协议、权限边界及配置示例见 [Agent 接入说明](docs/agents.md)。

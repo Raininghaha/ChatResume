@@ -170,7 +170,7 @@ export function createServer({ log = createLogger() } = {}) {
 
       // 必须在写响应头之前校验：一开流就没法改状态码了
       try {
-        preflight({ name, message });
+        preflight({ name, message, runner: body?.runner });
       } catch (err) {
         sendError(res, err);
         return;
@@ -214,6 +214,7 @@ export function createServer({ log = createLogger() } = {}) {
       try {
         for await (const ev of ask({
           name: target,
+          runner: body?.runner,
           message,
           signal: controller.signal,
           promptFile: body?.promptFile,
@@ -374,6 +375,7 @@ export function createServer({ log = createLogger() } = {}) {
         browser: browserStatus(),
         render: renderStatus(),
         runners: listRunners(),
+        defaultRunner: process.env.RESUME_RUNNER || 'auto',
       });
       return;
     }
@@ -406,7 +408,7 @@ export function createServer({ log = createLogger() } = {}) {
     if (req.method === 'POST' && p === '/api/reset') {
       readJson(req)
         .then((body) => {
-          resetSession(body?.name);
+          resetSession(body?.name, body?.runner);
           sendJson(res, 200, { ok: true });
         })
         .catch((err) => sendError(res, err));
@@ -422,8 +424,7 @@ export function createServer({ log = createLogger() } = {}) {
   });
   server.on('close', stopWatch);
 
-  // Node 默认 requestTimeout 是 5 分钟，会把超时的对话流直接掐断；交给 claude 自己的
-  // 10 分钟超时来管，这里必须放宽。仅监听 127.0.0.1，不存在 slowloris 风险。
+  // 长连接的生成超时由 Agent runner 管理；HTTP 层允许持续传输事件。
   server.requestTimeout = 0;
   server.headersTimeout = 65000;
   server.keepAliveTimeout = 65000;

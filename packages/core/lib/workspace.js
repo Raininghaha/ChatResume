@@ -91,6 +91,7 @@ export function loadState() {
   const state = {
     activeResume: raw.activeResume || null,
     sessions: { ...(raw.sessions || {}) },
+    runnerSessions: { ...(raw.runnerSessions || {}) },
   };
   // 旧版本把 sessionId 放在顶层（全局一份），迁移到按简历分开的 sessions
   if (raw.sessionId && state.activeResume && !state.sessions[state.activeResume]) {

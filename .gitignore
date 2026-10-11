@@ -25,3 +25,6 @@ Thumbs.db
 *.swp
 .idea/
 .vscode/
+
+# Local Agent commands and configuration
+/runners.json

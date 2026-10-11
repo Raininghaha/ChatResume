@@ -130,6 +130,10 @@ export function renameResume(from, to) {
 
   // 对话 session 跟着简历一起改名，否则改完名上下文就断了
   const state = loadState();
+  if (state.runnerSessions?.[from]) {
+    state.runnerSessions[safe] = state.runnerSessions[from];
+    delete state.runnerSessions[from];
+  }
   if (state.sessions?.[from]) {
     state.sessions[safe] = state.sessions[from];
     delete state.sessions[from];
@@ -151,6 +155,7 @@ export function deleteResume(name) {
 
   const state = loadState();
   if (state.sessions?.[name]) delete state.sessions[name];
+  if (state.runnerSessions?.[name]) delete state.runnerSessions[name];
   const remaining = names.filter((n) => n !== name);
   const next = state.activeResume === name ? remaining[0] : activeName() || remaining[0];
   state.activeResume = next;

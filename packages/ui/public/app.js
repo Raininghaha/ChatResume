@@ -20,6 +20,7 @@ const switcherBtn = $('switcherBtn');
 const switcherMenu = $('switcherMenu');
 const menuListEl = $('menuList');
 const activeNameEl = $('activeName');
+const runnerSelect = $('runnerSelect');
 
 const EDITOR_STYLE_ID = '__resume_editor_style';
 const EDITOR_CSS = `
@@ -399,6 +400,7 @@ function setEditMode(on) {
   inputEl.disabled = on || busy;
   sendBtn.disabled = on || busy;
   switcherBtn.disabled = on;
+  runnerSelect.disabled = on || busy;
   chatHintEl.textContent = on ? '手动编辑中，先点「完成」再对话' : 'Enter 发送 · Shift+Enter 换行';
 
   if (on) {
@@ -539,6 +541,7 @@ function setBusy(value) {
   sendBtn.disabled = value || editMode;
   inputEl.disabled = value || editMode;
   editBtn.disabled = value;
+  runnerSelect.disabled = value || editMode;
   switcherBtn.disabled = value || editMode;
 
   if (value) {
@@ -586,7 +589,7 @@ async function send() {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ message, name:activeResume }),
+      body: JSON.stringify({ message, name:activeResume, runner:runnerSelect.value }),
     });
 
     if (!res.ok || !res.body) {
@@ -749,7 +752,7 @@ function startPolling() {
 
 $('resetBtn').addEventListener('click', async () => {
   if (!confirm('清空当前对话记录，重新开始？（简历内容不受影响）')) return;
-  await fetch('/api/reset', { method: 'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:activeResume}) });
+  await fetch('/api/reset', { method: 'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:activeResume,runner:runnerSelect.value === 'auto' ? undefined : runnerSelect.value}) });
   messagesEl.innerHTML = '';
   messagesEl.appendChild(emptyEl);
   turn = 0;
@@ -828,3 +831,16 @@ loadResumes().then(() => {
 });
 autoGrow();
 inputEl.focus();
+
+async function loadRunners() {
+  try {
+    const data = await (await fetch('/api/status')).json();
+    for (const r of data.runners || []) {
+      const option = document.createElement('option');
+      option.value = r.name; option.textContent = r.name + (r.available.ok ? '' : '（未安装）');
+      option.disabled = !r.available.ok; runnerSelect.appendChild(option);
+    }
+    if ([...runnerSelect.options].some(o => o.value === data.defaultRunner)) runnerSelect.value = data.defaultRunner;
+  } catch { /* Sending a message reports backend errors. */ }
+}
+loadRunners();

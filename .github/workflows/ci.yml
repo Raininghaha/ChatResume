@@ -31,3 +31,6 @@ jobs:
 
       - name: 冒烟测试
         run: npm run smoke
+
+      - name: Agent 适配与会话回归
+        run: node scripts/agent-regression.js && node scripts/chat-regression.js

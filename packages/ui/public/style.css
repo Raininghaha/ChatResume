@@ -631,3 +631,5 @@ body {
   .messages { padding: 16px 12px; }
   .hint { display: none; }
 }
+
+#runnerSelect { font: inherit; color: inherit; border: 1px solid var(--line-soft); background: transparent; border-radius: 5px; padding: 3px 5px; max-width: 160px; }

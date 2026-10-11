@@ -71,7 +71,7 @@ export function preflight({ name, message, runner: runnerName } = {}) {
 export async function* ask({
   name,
   message,
-  runner: runnerName = 'claude',
+  runner: runnerName,
   cwd,
   signal,
   promptFile,
@@ -88,7 +88,7 @@ export async function* ask({
   running.set(target, controller);
 
   const state = loadState();
-  const sessionId = state.sessions?.[target] || null;
+  const sessionId = runner.name === 'claude' ? state.sessions?.[target] || null : state.runnerSessions?.[target]?.[runner.name] || null;
   let nextSession;
 
   try {
@@ -111,35 +111,46 @@ export async function* ask({
       yield ev;
     }
   } finally {
-    running.delete(target);
+    if (running.get(target) === controller) running.delete(target);
     if (signal) signal.removeEventListener?.('abort', forwardAbort);
-    if (nextSession !== undefined) {
+    if (nextSession !== undefined && !controller.signal.aborted) {
       const s = loadState();
       s.sessions = { ...(s.sessions || {}) };
-      if (nextSession) s.sessions[target] = nextSession;
-      else delete s.sessions[target];
+      if (runner.name === 'claude') {
+        if (nextSession) s.sessions[target] = nextSession;
+        else delete s.sessions[target];
+      } else {
+        s.runnerSessions ||= {};
+        s.runnerSessions[target] ||= {};
+        if (nextSession) s.runnerSessions[target][runner.name] = nextSession;
+        else delete s.runnerSessions[target][runner.name];
+      }
       saveState(s);
     }
   }
 }
 
 /** 中止正在跑的对话，并丢掉这份简历的会话记忆（简历内容不动）。 */
-export function resetSession(name) {
+export function resetSession(name, runnerName) {
+  if (runnerName === 'auto') runnerName = getRunner('auto').name;
   const target = name || activeName();
   const controller = target && running.get(target);
   if (controller) {
     controller.abort();
-    running.delete(target);
   }
   const state = loadState();
-  if (target && state.sessions?.[target]) {
-    delete state.sessions[target];
+  if (target) {
+    if (!runnerName || runnerName === 'claude') delete state.sessions[target];
+    if (!runnerName) delete state.runnerSessions?.[target];
+    else if (state.runnerSessions?.[target]) delete state.runnerSessions[target][runnerName];
     saveState(state);
   }
   return { reset: target, aborted: Boolean(controller) };
 }
 
-export function sessionOf(name) {
+export function sessionOf(name, runnerName) {
   const target = name || activeName();
-  return loadState().sessions?.[target] || null;
+  const runner = getRunner(runnerName);
+  const state = loadState();
+  return runner.name === 'claude' ? state.sessions?.[target] || null : state.runnerSessions?.[target]?.[runner.name] || null;
 }

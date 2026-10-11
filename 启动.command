@@ -1,19 +1,13 @@
 #!/bin/bash
 cd "$(dirname "$0")" || exit 1
 
-# GUI 启动的进程 PATH 只有 /usr/bin:/bin，node 和 claude 常常在别处
+# GUI 启动的进程 PATH 较短，Node 和 Agent CLI 可能在别处
 export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
 if ! command -v node >/dev/null 2>&1; then
   echo "❌ 没找到 node，请先安装 Node.js（建议 22+）"
   read -r -p "按回车退出…"
   exit 1
-fi
-
-if ! command -v claude >/dev/null 2>&1; then
-  echo "⚠️  没找到 claude CLI，对话功能将不可用"
-  echo "   确认 Claude Code 已安装并在 PATH 中"
-  echo
 fi
 
 # 首次运行要 npm install 才能把 workspace 软链起来。

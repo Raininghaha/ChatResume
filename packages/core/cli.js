@@ -56,11 +56,11 @@ const USAGE = `resume-chat —— 用对话改简历
   --json                      以 JSON 输出（ask 下为 NDJSON 事件流）
   --home <目录>               覆盖数据目录（等价于 RESUME_HOME）
   --prompt-file <文件>        追加一段自己的编辑规范
-  --runner <名字>             指定对话后端，默认 claude
+  --runner <名字>             指定 Agent（auto / claude / codex / 自定义名），默认 auto
   -q, --quiet                 抑制进度输出（ask 时只留正文）
 
 退出码：
-  0 成功    1 check 未通过    2 用法错误    3 环境不满足（缺 claude / 缺浏览器）`;
+  0 成功    1 check 未通过    2 用法错误    3 环境不满足（缺所选 Agent / 缺浏览器）`;
 
 function parseArgs(argv) {
   const flags = { _: [] };
@@ -260,7 +260,7 @@ export async function runCli(argv = process.argv.slice(2), { extraCommands = {} 
     reset: () => {
       ensureHome();
       const name = rest.join(' ').trim() || activeName();
-      resetSession(name);
+      resetSession(name, flags.runner);
       emit({ reset: name }, `已清空「${name}」的对话记忆`);
       return EXIT.OK;
     },
@@ -285,8 +285,10 @@ export async function runCli(argv = process.argv.slice(2), { extraCommands = {} 
         promptFile: flags['prompt-file'] === true ? undefined : flags['prompt-file'],
       });
 
+      let failed = false;
       try {
         for await (const ev of events) {
+          if (ev.t === 'error') failed = true;
           if (json) {
             process.stdout.write(JSON.stringify({ ...ev, name }) + '\n');
             continue;
@@ -305,12 +307,12 @@ export async function runCli(argv = process.argv.slice(2), { extraCommands = {} 
       } finally {
         closeBrowser();
       }
-      return EXIT.OK;
+      return failed ? EXIT.CHECK_FAILED : EXIT.OK;
     },
     session: () => {
       ensureHome();
       const name = rest.join(' ').trim() || activeName();
-      const id = sessionOf(name);
+      const id = sessionOf(name, flags.runner);
       emit({ name, sessionId: id }, id || '（这份简历还没有对话记录）');
       return EXIT.OK;
     },

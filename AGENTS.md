@@ -10,7 +10,7 @@
 
 ```bash
 npm install                    # 零外部依赖，离线可跑
-resume-chat status --json      # 确认 claude 与浏览器就绪
+resume-chat status --json      # 确认可用 Agent 与浏览器就绪
 resume-chat ask "<用户的要求>"  # 对话改简历
 ```
 
@@ -45,7 +45,7 @@ resume-chat check --json
 
 ## 退出码
 
-`0` 成功 · `1` check 未通过 · `2` 用法错误 · `3` 环境不满足（缺 claude / 缺浏览器）
+`0` 成功 · `1` check 未通过 · `2` 用法错误 · `3` 环境不满足（缺所选 Agent / 缺浏览器）
 
 ## 结构
 
@@ -54,3 +54,18 @@ resume-chat check --json
 
 改对话行为看 `packages/core/lib/chat.js` 和 `lib/prompt.js`；
 改对话后端看 `packages/core/lib/runners/`。
+
+## 支持任意 Agent
+
+任何能读写文件或运行命令的 Agent（Codex、Claude Code、Cursor、Gemini 等）都可以使用前述 CLI 和直接编辑流程，不需要先安装 Claude。
+在仓库内调用 `npm run resume -- <命令>`，无需全局安装。例如：
+
+```bash
+npm run resume -- path --json
+npm run resume -- check --json
+npm run resume -- ask --runner codex "精简最近一段工作经历"
+```
+
+网页左下方可以选择对话 Agent。内置 Claude、Codex；默认 `auto` 选择本机可用的 Agent，`RESUME_RUNNER` 可指定默认值。
+会话按简历和 Agent 隔离，切换 Agent 不会复用另一家 CLI 的 session。
+其它对话后端配置在数据目录的 `runners.json`，详见 `docs/agents.md`。
